@@ -3,6 +3,7 @@
 import argparse
 import sys
 import random
+from time import time
 import utilities
 
 class Simulator:
@@ -121,19 +122,26 @@ def parse_args():
     mode_group.add_argument('--requests', '-r', type=int, default=10, help='number of requests to process')
     mode_group.add_argument('--time', '-t', type=int, help='run simulation for specified amount of time')
     parser.add_argument('-q', action='store_true', help="don't print log to stdout")
+    parser.add_argument('--seed', '-s', type=float, help='seed the simulation with a predetermined value')
     args = parser.parse_args()
     return args
 
 def main():
     args = parse_args()
+    if args.seed:
+        random.seed(args.seed)
+    else:
+        seed = time()
+        random.seed(seed)
+        print("System seeded with %s" % seed)
     if args.avg:
         total_response_time = 0
         for _ in range(args.avg):
             simulator = Simulator(args.n)
             simulator.simulate(args.requests, args.time, args.q)
             requests = simulator.completed_requests
-            time = simulator.time
-            response_time = time/requests
+            sim_time = simulator.time
+            response_time = sim_time/requests
             total_response_time += response_time
         total_response_time /= args.avg
         print(total_response_time)
