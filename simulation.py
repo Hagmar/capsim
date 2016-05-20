@@ -20,6 +20,8 @@ class Simulator:
         self.preprocessing_time = 0
         self.job_id = 0
         self.completed_requests = 0
+        self.job_start_times = {}
+        self.job_response_times = []
 
     def simulate(self, requests=10, time=None, q=False):
         self.q = q
@@ -78,6 +80,7 @@ class Simulator:
         self.preprocessor.append(self.job_id)
         self.next_arrival = utilities.inter_arrival_time()
         self.preprocessing_time = utilities.pre_processor_service_time(self.n)
+        self.job_start_times[self.job_id] = self.time
 
         if not self.q:
             self.log("Job number %d arrived, requiring %s time" % (self.job_id, self.preprocessing_time))
@@ -106,9 +109,11 @@ class Simulator:
 
         if not self.join[job_id]:
             self.join.pop(job_id)
+            total_time = self.time - self.job_start_times.pop(job_id)
             if not self.q:
-                self.log("Job number %d completed" % job_id)
+                self.log("Job number %d completed after %s time" % (job_id, total_time))
             self.completed_requests += 1
+            self.job_response_times.append(total_time)
 
     def log(self, message):
         print("%s - %s" % (self.time, message))
@@ -135,18 +140,31 @@ def main():
         print("System seeded with %s" % seed)
     if args.avg:
         total_throughput = 0
-        for _ in range(args.avg):
+        total_response_time = 0
+        for i in range(args.avg):
             simulator = Simulator(args.n)
             simulator.simulate(args.requests, args.time, args.q)
-            requests = simulator.completed_requests
-            sim_time = simulator.time
-            throughput = sim_time/requests
+            (throughput, mean_response_time) = evaluate(simulator)
             total_throughput += throughput
+            total_response_time += mean_response_time
+            print("--- Simulation %d ---" % i)
+            print("  Throughput: %s" % throughput)
+            print("  Mean response time: %s" % mean_response_time)
         total_throughput /= args.avg
-        print(total_throughput)
+        total_response_time /= args.avg
+        print()
+        print("Average throughput: %s" % total_throughput)
+        print("Average mean response time: %s" % total_response_time)
     else:
         simulator = Simulator(args.n)
         simulator.simulate(args.requests, args.time, args.q)
+
+def evaluate(simulator):
+    requests = simulator.completed_requests
+    sim_time = simulator.time
+    throughput = requests/sim_time
+    mean_response_time = sum(simulator.job_response_times)/float(requests)
+    return (throughput, mean_response_time)
 
 if __name__ == '__main__':
     main()
