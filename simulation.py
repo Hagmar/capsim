@@ -98,7 +98,6 @@ class Simulator:
         self.preprocessor.pop(0)
         self.join[job_id] = self.n
 
-
     def server_finish_sub_task(self, i):
         (job_id, _) = self.servers[i].pop(0)
         self.join[job_id] -= 1
@@ -135,16 +134,16 @@ def main():
         random.seed(seed)
         print("System seeded with %s" % seed)
     if args.avg:
-        total_response_time = 0
+        total_throughput = 0
         for _ in range(args.avg):
             simulator = Simulator(args.n)
             simulator.simulate(args.requests, args.time, args.q)
             requests = simulator.completed_requests
             sim_time = simulator.time
-            response_time = sim_time/requests
-            total_response_time += response_time
-        total_response_time /= args.avg
-        print(total_response_time)
+            throughput = sim_time/requests
+            total_throughput += throughput
+        total_throughput /= args.avg
+        print(total_throughput)
     else:
         simulator = Simulator(args.n)
         simulator.simulate(args.requests, args.time, args.q)
