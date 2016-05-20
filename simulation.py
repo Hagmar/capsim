@@ -83,14 +83,16 @@ class Simulator:
 
     def split_request(self):
         job_id = self.preprocessor[0]
-        selected_servers = random.sample(range(self.m), self.n)
+        selected_servers = sorted(random.sample(range(self.m), self.n))
+        self.log("Job number %d split to servers %s" % (job_id, selected_servers))
+
         for s in selected_servers:
             service_time = utilities.sub_task_service_time(self.n)
             self.servers[s].append([job_id, service_time])
+            self.log("Time required at server %d: %s" % (s, service_time))
         self.preprocessor.pop(0)
         self.join[job_id] = self.n
 
-        self.log("Job number %d split to servers %s" % (job_id, sorted(selected_servers)))
 
     def server_finish_sub_task(self, i):
         (job_id, _) = self.servers[i].pop(0)
