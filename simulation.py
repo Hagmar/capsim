@@ -31,33 +31,40 @@ class Simulator:
         random.seed(seed)
 
     def recalculate_times(self, waited_time):
-        finished_server = None
-        event = None
-        self.next_arrival -= waited_time
-        waiting_time = self.next_arrival
-        if not self.next_arrival:
-            event = self.request_arrived
-            self.next_arrival = utilities.inter_arrival_time()
-        print("Arrival time: %s" % self.next_arrival)
-        if self.preprocessor:
-            self.preprocessing_time -= waited_time
-            waiting_time = min(waiting_time, self.preprocessing_time)
-            if not self.preprocessing_time:
-                event = self.split_request
-        print("Pre-processing time: %s" % self.preprocessing_time)
-        for server in self.servers:
+        waiting_time = None
+
+        for s in range(self.m):
+            server = self.servers[s]
             print(server)
             if server:
                 server[0][1] -= waited_time
-                waiting_time = min(waiting_time, server[0][1])
                 if not server[0][1]:
-                    event = self.server_finish_sub_task
-                    finished_server = server
+                    self.server_finish_sub_task(s)
+                if server[0][1]:
+                    if not waiting_time:
+                        waiting_time = server[0][1]
+                    else:
+                        waiting_time = min(waiting_time, server[0][1])
 
-        if finished_server:
-            event(finished_server)
+        if self.preprocessor:
+            self.preprocessing_time -= waited_time
+            if not self.preprocessing_time:
+                self.split_request()
+            if self.preprocessor:
+                if not waiting_time:
+                    waiting_time = self.preprocessing_time
+                else:
+                    waiting_time = min(waiting_time, self.preprocessing_time)
+            print("Pre-processing time: %s" % self.preprocessing_time)
+
+        self.next_arrival -= waited_time
+        if not self.next_arrival:
+            self.request_arrived()
+        if not waiting_time:
+            waiting_time = self.next_arrival
         else:
-            event()
+            waiting_time = min(waiting_time, self.next_arrival)
+        print("Arrival time: %s" % self.next_arrival)
 
         return waiting_time
 
@@ -77,6 +84,7 @@ class Simulator:
             service_time = utilities.sub_task_service_time(self.n)
             self.servers[s].append([job_id, service_time])
         self.preprocessor.pop(0)
+        self.join[job_id] = self.n
 
         self.log("Job number %d split to servers %s" % (job_id, sorted(selected_servers)))
 
