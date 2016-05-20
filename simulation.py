@@ -6,10 +6,10 @@ import random
 import utilities
 
 class Simulator:
-    def __init__(self, n=5):
+    def __init__(self, n):
         self.time = 0
         self.m = 10
-        self.n = 5
+        self.n = n
         self.preprocessor = []
         self.join = {}
         self.servers = []
@@ -20,7 +20,8 @@ class Simulator:
         self.job_id = 0
         self.completed_requests = 0
 
-    def simulate(self, requests=10, time=None):
+    def simulate(self, requests=10, time=None, q=False):
+        self.q = q
         self.time = self.next_arrival
         self.request_arrived()
         waiting_time = min(self.next_arrival, self.preprocessing_time)
@@ -77,19 +78,22 @@ class Simulator:
         self.next_arrival = utilities.inter_arrival_time()
         self.preprocessing_time = utilities.pre_processor_service_time(self.n)
 
-        self.log("Job number %d arrived, requiring %s time" % (self.job_id, self.preprocessing_time))
+        if not self.q:
+            self.log("Job number %d arrived, requiring %s time" % (self.job_id, self.preprocessing_time))
 
         self.job_id += 1
 
     def split_request(self):
         job_id = self.preprocessor[0]
         selected_servers = sorted(random.sample(range(self.m), self.n))
-        self.log("Job number %d split to servers %s" % (job_id, selected_servers))
+        if not self.q:
+            self.log("Job number %d split to servers %s" % (job_id, selected_servers))
 
         for s in selected_servers:
             service_time = utilities.sub_task_service_time(self.n)
             self.servers[s].append([job_id, service_time])
-            self.log("Time required at server %d: %s" % (s, service_time))
+            if not self.q:
+                self.log("Time required at server %d: %s" % (s, service_time))
         self.preprocessor.pop(0)
         self.join[job_id] = self.n
 
@@ -97,11 +101,13 @@ class Simulator:
     def server_finish_sub_task(self, i):
         (job_id, _) = self.servers[i].pop(0)
         self.join[job_id] -= 1
-        self.log("Server %d finished subtask on job %d" % (i, job_id))
+        if not self.q:
+            self.log("Server %d finished subtask on job %d" % (i, job_id))
 
         if not self.join[job_id]:
             self.join.pop(job_id)
-            self.log("Job number %d completed" % job_id)
+            if not self.q:
+                self.log("Job number %d completed" % job_id)
             self.completed_requests += 1
 
     def log(self, message):
@@ -109,16 +115,31 @@ class Simulator:
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument('n', default=5, type=int, help='number of servers to split each request to')
+    parser.add_argument('--avg', type=int, help='calculate the average system performance over several simulations')
     mode_group = parser.add_mutually_exclusive_group()
     mode_group.add_argument('--requests', '-r', type=int, default=10, help='number of requests to process')
     mode_group.add_argument('--time', '-t', type=int, help='run simulation for specified amount of time')
+    parser.add_argument('-q', action='store_true', help="don't print log to stdout")
     args = parser.parse_args()
     return args
 
 def main():
     args = parse_args()
-    simulator = Simulator(5)
-    simulator.simulate(args.requests, args.time)
+    if args.avg:
+        total_response_time = 0
+        for _ in range(args.avg):
+            simulator = Simulator(args.n)
+            simulator.simulate(args.requests, args.time, args.q)
+            requests = simulator.completed_requests
+            time = simulator.time
+            response_time = time/requests
+            total_response_time += response_time
+        total_response_time /= args.avg
+        print(total_response_time)
+    else:
+        simulator = Simulator(args.n)
+        simulator.simulate(args.requests, args.time, args.q)
 
 if __name__ == '__main__':
     main()
