@@ -51,33 +51,23 @@ class Simulator:
                 self.server_times[s] -= waited_time
                 if not self.server_times[s]:
                     self.server_finish_sub_task(s)
-                if server:
-                    if not waiting_time:
-                        waiting_time = self.server_times[s]
-                    else:
-                        waiting_time = min(waiting_time, self.server_times[s])
 
         if self.preprocessor:
             self.preprocessing_time -= waited_time
             if not self.preprocessing_time:
                 self.split_request()
-            if self.preprocessor:
-                if not waiting_time:
-                    waiting_time = self.preprocessing_time
-                else:
-                    waiting_time = min(waiting_time, self.preprocessing_time)
 
         self.next_arrival -= waited_time
         if not self.next_arrival:
             self.request_arrived()
-            if not waiting_time:
-                waiting_time = self.preprocessing_time
-            else:
-                waiting_time = min(waiting_time, self.preprocessing_time)
-        if not waiting_time:
-            waiting_time = self.next_arrival
-        else:
-            waiting_time = min(waiting_time, self.next_arrival)
+        waiting_time = self.next_arrival
+
+        for s in range(self.m):
+            if self.servers[s]:
+                waiting_time = min(waiting_time, self.server_times[s])
+
+        if self.preprocessor:
+            waiting_time = min(waiting_time, self.preprocessing_time)
 
         return waiting_time
 
@@ -145,7 +135,7 @@ def parse_args():
     mode_group.add_argument('--requests', '-r', type=int, default=10, help='number of requests to process')
     mode_group.add_argument('--time', '-t', type=int, help='run simulation for specified amount of time')
     parser.add_argument('-v', action='store_true', help="don't print log to stdout")
-    parser.add_argument('--seed', '-s', type=float, help='seed the simulation with a predetermined value')
+    parser.add_argument('--seed', '-s', help='seed the simulation with a predetermined value')
     args = parser.parse_args()
     return args
 
@@ -176,6 +166,9 @@ def main():
     else:
         simulator = Simulator(args.n)
         simulator.simulate(args.requests, args.time, args.v)
+        (throughput, mean_response_time) = evaluate(simulator)
+        print("Throughput: %s" % throughput)
+        print("Mean response time: %s" % mean_response_time)
 
 def evaluate(simulator):
     requests = simulator.completed_requests
