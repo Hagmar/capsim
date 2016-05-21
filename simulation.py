@@ -122,6 +122,7 @@ class Simulator:
             self.log("S%d finished subtask on job %d" % (i, job_id))
         if self.servers[i]:
             service_time = utilities.sub_task_service_time(self.n)
+            self.server_times[i] = service_time
             if self.v:
                 self.log("S{} started subtask of job {}, requiring {:0.6f} time".format(i, self.servers[i][0], service_time))
 
