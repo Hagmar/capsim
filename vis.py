@@ -59,7 +59,7 @@ plt.hist(x, bins=np.arange(0,max(x)+0,0.25), normed=1, facecolor='green', alpha=
 
 plt.xlabel('Server sub-task service time')
 plt.ylabel('Frequency')
-plt.title(r'Server sub-task time for required for n=2')
+plt.title(r'Server sub-task time required for n=2')
 plt.axis([0, 25, 0, 0.6])
 
 plt.show()
@@ -70,7 +70,7 @@ plt.hist(x, bins=np.arange(0,max(x)+0,0.1), normed=1, facecolor='green', alpha=0
 
 plt.xlabel('Server sub-task service time')
 plt.ylabel('Frequency')
-plt.title(r'Server sub-task time for required for n=5')
+plt.title(r'Server sub-task time required for n=5')
 plt.axis([0, 8, 0, 2.5])
 
 plt.show()
@@ -81,7 +81,7 @@ plt.hist(x, bins=np.arange(0,max(x)+0,0.03), normed=1, facecolor='green', alpha=
 
 plt.xlabel('Server sub-task service time')
 plt.ylabel('Frequency')
-plt.title(r'Server sub-task time for required for n=9')
+plt.title(r'Server sub-task time required for n=9')
 plt.axis([0, 3, 0, 6])
 
 plt.show()
