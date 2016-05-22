@@ -24,6 +24,7 @@ class Simulator:
         self.job_start_times = {}
         self.job_response_times = []
 
+# Run the simulation
     def simulate(self, requests=10, time=None, v=False):
         self.v = v
         self.time = self.next_arrival
@@ -39,9 +40,12 @@ class Simulator:
                 self.time += waiting_time
                 waiting_time = self.recalculate_times(waiting_time)
 
+# Seed the system
     def seed(self, seed):
         random.seed(seed)
 
+# Wait for a specified time, perform an event, and recalculate new waiting
+# time
     def recalculate_times(self, waited_time):
         waiting_time = None
 
@@ -71,6 +75,8 @@ class Simulator:
 
         return waiting_time
 
+# Event: when i new request arrives to the system
+# Adds the job to the pre-processors queue
     def request_arrived(self):
         if not self.preprocessor:
             self.preprocessing_time = utilities.pre_processor_service_time(self.n)
@@ -85,6 +91,8 @@ class Simulator:
 
         self.job_id += 1
 
+# Event: when the pre-processor has finished a task
+# Distributes sub-tasks to n random servers
     def split_request(self):
         job_id = self.preprocessor.pop(0)
         selected_servers = sorted(random.sample(range(self.m), self.n))
@@ -105,6 +113,8 @@ class Simulator:
             if self.v:
                 self.log("Job {} started, requiring {:0.6f} time".format(self.preprocessor[0], self.preprocessing_time))
 
+# Event: when a server finishes a sub-task
+# The join point collects the result
     def server_finish_sub_task(self, i):
         job_id = self.servers[i].pop(0)
         self.join[job_id] -= 1
@@ -124,9 +134,11 @@ class Simulator:
             self.completed_requests += 1
             self.job_response_times.append(total_time)
 
+# Show logging information
     def log(self, message):
         print("{:0.6f} - {}".format(self.time, message))
 
+# Parse command line arguments
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('n', default=5, type=int, help='number of servers to split each request to')
@@ -156,9 +168,6 @@ def main():
             (throughput, mean_response_time) = evaluate(simulator)
             total_throughput += throughput
             total_response_time += mean_response_time
-#            print("--- Simulation %d ---" % i)
-#            print("  Throughput: %s" % throughput)
-#            print("  Mean response time: %s" % mean_response_time)
         total_throughput /= args.avg
         total_response_time /= args.avg
         print("Average throughput: %s" % total_throughput)
@@ -170,6 +179,7 @@ def main():
         print("Throughput: %s" % throughput)
         print("Mean response time: %s" % mean_response_time)
 
+# Calculate throughput and mean response time for a simulation
 def evaluate(simulator):
     requests = simulator.completed_requests
     sim_time = simulator.time
